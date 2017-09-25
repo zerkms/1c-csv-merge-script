@@ -36,7 +36,7 @@ foreach ($offers as $node) {
 
     $withVariant = strpos($id, '#') !== false;
     $variant = $withVariant ? extractVariant($name) : '';
-    $name = $withVariant ? extractTitle($name) : '';
+    $name = $withVariant ? extractTitle($name) : $name;
 
     $importNode = findItemById($importXpath, $id);
     $images = extractImages($importXpath, $importNode);
