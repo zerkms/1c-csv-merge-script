@@ -105,9 +105,25 @@ function writeCsv($path, array $data)
 {
     $fp = fopen($path, 'wb');
 
+    $header = 'Категория;Товар;Цена;Адрес;Видим;Хит;Бренд;Вариант;Старая цена;Артикул;Склад;Заголовок страницы;Ключевые слова;Описание страницы;Аннотация;Описание;Изображения';
+    fwrite($fp, utfToCp1251($header));
+
     foreach ($data as $row) {
+        foreach ($row as $i => $v) {
+            $row[$i] = utfToCp1251($v);
+        }
+
         fputcsv($fp, $row, ';');
     }
 
     fclose($fp);
+}
+
+function utfToCp1251($v)
+{
+    if (!is_string($v)) {
+        return $v;
+    }
+
+    return iconv('utf-8', 'cp1251', $v);
 }
