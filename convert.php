@@ -36,14 +36,16 @@ foreach ($offers as $node) {
 
     $withVariant = strpos($id, '#') !== false;
     $variant = $withVariant ? extractVariant($name) : '';
+    $name = $withVariant ? extractTitle($name) : '';
 
     $importNode = findItemById($importXpath, $id);
     $images = extractImages($importXpath, $importNode);
 
     $title = $importXpath->query('./o:Наименование', $importNode)[0]->nodeValue;
     $keywords = $importXpath->query('./o:Описание', $importNode)[0]->nodeValue;
-    $description = $keywords;
+    $pageDescription = $keywords;
     $annotation = $keywords;
+    $description = $keywords;
     $imagesList = implode(', ', $images);
 
     $rows[] = [
@@ -60,8 +62,9 @@ foreach ($offers as $node) {
         $amount,
         $title,
         $keywords,
-        $description,
+        $pageDescription,
         $annotation,
+        $description,
         $imagesList,
     ];
 }
@@ -85,6 +88,12 @@ function extractVariant($title)
     return $matches[1];
 }
 
+function extractTitle($title)
+{
+    preg_match('~^[^(]+~', $title, $matches);
+    return trim($matches[0]);
+}
+
 function extractImages(DOMXPath $xpath, DOMElement $importNode)
 {
     $imageNodes = $xpath->query('./o:Картинка', $importNode);
@@ -105,7 +114,7 @@ function writeCsv($path, array $data)
 {
     $fp = fopen($path, 'wb');
 
-    $header = 'Категория;Товар;Цена;Адрес;Видим;Хит;Бренд;Вариант;Старая цена;Артикул;Склад;Заголовок страницы;Ключевые слова;Описание страницы;Аннотация;Описание;Изображения';
+    $header = "Категория;Товар;Цена;Адрес;Видим;Хит;Бренд;Вариант;Старая цена;Артикул;Склад;Заголовок страницы;Ключевые слова;Описание страницы;Аннотация;Описание;Изображения\n";
     fwrite($fp, utfToCp1251($header));
 
     foreach ($data as $row) {
