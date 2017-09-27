@@ -21,32 +21,40 @@ $offersXpath->registerNamespace('o', 'urn:1C.ru:commerceml_2');
 $importXpath = new DOMXPath($importDOM);
 $importXpath->registerNamespace('o', 'urn:1C.ru:commerceml_2');
 
-$offers = $offersXpath->query('//o:Предложение', $offersDOM);
+$imports = $importXpath->query('//o:Товар', $importDOM);
 
 $rows = [];
 
-foreach ($offers as $node) {
+foreach ($imports as $importNode) {
     /** @var DOMElement $node */
 
-    $id = $offersXpath->query('./o:Ид', $node)[0]->nodeValue;
-    $name = $offersXpath->query('./o:Наименование', $node)[0]->nodeValue;
-    $price = (int)$offersXpath->query('.//o:ЦенаЗаЕдиницу', $node)[0]->nodeValue;
-    $article = $offersXpath->query('./o:Артикул', $node)[0]->nodeValue;
-    $amount = (int)$offersXpath->query('./o:Количество', $node)[0]->nodeValue;
-
-    $withVariant = strpos($id, '#') !== false;
-    $variant = $withVariant ? extractVariant($name) : '';
-    $name = $withVariant ? extractTitle($name) : $name;
-
-    $importNode = findItemById($importXpath, $id);
     $images = extractImages($importXpath, $importNode);
 
-    $title = $importXpath->query('./o:Наименование', $importNode)[0]->nodeValue;
+    $id = $importXpath->query('./o:Ид', $importNode)[0]->nodeValue;
+    $name = $importXpath->query('./o:Наименование', $importNode)[0]->nodeValue;
+    $title = $name;
     $keywords = $importXpath->query('./o:Описание', $importNode)[0]->nodeValue;
+    $article = $importXpath->query('./o:Артикул', $importNode)[0]->nodeValue;
     $pageDescription = $keywords;
     $annotation = $keywords;
     $description = $keywords;
     $imagesList = implode(', ', $images);
+
+    $offerNode = findOfferById($offersXpath, $id);
+
+    $price = 0;
+    $amount = 0;
+    $variant = '';
+
+    if ($offerNode !== null) {
+        $price = (int)$offersXpath->query('.//o:ЦенаЗаЕдиницу', $offerNode)[0]->nodeValue;
+        $amount = (int)$offersXpath->query('./o:Количество', $offerNode)[0]->nodeValue;
+        $offerId = $offersXpath->query('.//o:Ид', $offerNode)[0]->nodeValue;
+        $offerName = $offersXpath->query('./o:Наименование', $offerNode)[0]->nodeValue;
+
+        $withVariant = strpos($offerId, '#') !== false;
+        $variant = $withVariant ? extractVariant($offerName) : '';
+    }
 
     $rows[] = [
         '1C',
@@ -74,12 +82,19 @@ writeCsv($csvPath, $rows);
 /**
  * @return DOMElement
  */
-function findItemById(DOMXPath $xpath, $id)
+function findOfferById(DOMXPath $xpath, $id)
 {
-    $id = preg_replace('~#.*$~', '', $id);
+    $item = $xpath->query(sprintf('//o:Предложение[./o:Ид[. = "%s"]]', $id));
+    if ($item->length > 0) {
+        return $item[0];
+    }
 
-    $item = $xpath->query(sprintf('//o:Товар[./o:Ид[. = "%s"]]', $id));
-    return $item[0];
+    $item = $xpath->query(sprintf('//o:Предложение[./o:Ид[starts-with(., "%s")]]', $id));
+    if ($item->length > 0) {
+        return $item[0];
+    }
+
+    return null;
 }
 
 function extractVariant($title)
@@ -134,5 +149,5 @@ function utfToCp1251($v)
         return $v;
     }
 
-    return iconv('utf-8', 'cp1251', $v);
+    return iconv('utf-8', 'cp1251//TRANSLIT', $v);
 }
