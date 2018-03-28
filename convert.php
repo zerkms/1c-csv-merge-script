@@ -171,5 +171,5 @@ function utfToCp1251($v)
         return $v;
     }
 
-    return iconv('utf-8', 'cp1251//TRANSLIT', $v);
+    return iconv('utf-8', 'cp1251//TRANSLIT', Normalizer::normalize($v));
 }
