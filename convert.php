@@ -121,7 +121,7 @@ function findOffersById(DOMXPath $xpath, $id)
 
 function extractVariant($title)
 {
-    preg_match('~\(([^)]+)\)~', $title, $matches);
+    preg_match('~.*\(([^)]+)\)~', $title, $matches);
     return $matches[1];
 }
 
