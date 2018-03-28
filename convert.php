@@ -81,7 +81,7 @@ foreach ($imports as $importNode) {
                 $name,
                 $price,
                 $article,
-                0,
+                1,
                 0,
                 '',
                 $variant,
